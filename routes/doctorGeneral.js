@@ -6,7 +6,7 @@ const cors = require('cors');
 const authenticateToken = require('../middlewares/authMiddleware'); 
 const authenticateRole = require('../middlewares/authenticateRole');  
 router.use(cors({
-  origin: 'http://localhost:3000',
+  origin: 'https://192.168.74.215:3000',
   credentials: true // If you use cookies or HTTP auth
 }));
 

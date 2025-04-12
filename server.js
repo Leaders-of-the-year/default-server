@@ -12,8 +12,10 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
-
+app.use(cors({
+  origin: 'https://192.168.74.215:3000', // your actual frontend origin
+  credentials: true
+}));
 // PostgreSQL Connection
 const pool = new Pool({
   user: process.env.DB_USER || 'mehdi',
@@ -39,7 +41,7 @@ const server = https.createServer(options, app);
 // Socket.IO setup
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: 'https://192.168.74.215:3000',
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type'],
     credentials: true,

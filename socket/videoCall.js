@@ -1,6 +1,7 @@
 // socket/videoCall.js
 
 const doctors = new Map(); // socket.id => { isBusy, patientId }
+// return this when prompting for waiting patients
 const waitingPatients = new Set(); // socket ids
 
 function checkWaitingPatients(io) {
