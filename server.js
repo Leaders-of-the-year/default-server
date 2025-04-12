@@ -72,7 +72,7 @@ const doctorSpecialtyRoutes = require('./routes/doctorSpecialty');
 
 app.use('/api/auth', authRoutes);
 app.use('/api', doctorGeneralRoutes);
-app.use('/api/patients', patientRoutes);
+app.use('/api/dashboard_patients', patientRoutes);
 app.use('/api', doctorSpecialtyRoutes);
 
 // Start Server
