@@ -147,6 +147,7 @@ router.get('/patient/mydoctors/search', authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+// for fecthing a spesefic doctor profile
 router.get('/patient/mydoctors/id/:id', authenticateToken, async (req, res) => {
   const doctorId = parseInt(req.params.id); // Ensure it's a number
 

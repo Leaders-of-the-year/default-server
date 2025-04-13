@@ -73,9 +73,9 @@ const patientRoutes = require('./routes/patients');
 const doctorSpecialtyRoutes = require('./routes/doctorSpecialty');
 
 app.use('/api/auth', authRoutes);
-app.use('/api', doctorGeneralRoutes);
+app.use('/api/dashboard_doctors_general', doctorGeneralRoutes);
 app.use('/api/dashboard_patients', patientRoutes);
-app.use('/api', doctorSpecialtyRoutes);
+app.use('/api/dashboard_doctors_specialty', doctorSpecialtyRoutes);
 
 // Start Server
 server.listen(3001, '192.168.74.215', () => {

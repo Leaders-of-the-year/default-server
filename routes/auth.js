@@ -16,7 +16,7 @@ const getRoleId = (type) => {
 };
 
 router.post('/register', async (req, res) => {
-  const { type, username, email, password, first_name, last_name, phone_number, address, gender, medical_info, specialty_name, doctor_number, specialization, years_of_experience, description } = req.body;
+  const { type, username, email, password, first_name, last_name, phone_number, address, gender, medical_info, specialty_name, doctor_number,  years_of_experience, description } = req.body;
 
   try {
     // Step 1: Check if email already exists
@@ -44,9 +44,9 @@ router.post('/register', async (req, res) => {
     switch (type) {
       case 'doctor_general':
         profileInsert = await pool.query(
-          `INSERT INTO doctor_general (first_name, last_name, doctor_number, specialization, years_of_experience, user_id) 
-           VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-          [first_name, last_name, doctor_number, specialization, years_of_experience, userId]
+          `INSERT INTO doctor_general (first_name, last_name, doctor_number, years_of_experience, user_id) 
+           VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+          [first_name, last_name, doctor_number,  years_of_experience, userId]
         );
         break;
 

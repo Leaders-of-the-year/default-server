@@ -5,8 +5,8 @@ const pool = require('../config/db');
 const authenticateToken = require('../middlewares/authMiddleware'); 
 const authenticateRole = require('../middlewares/authenticateRole'); 
 
-// Route for fetching the doctor's profile (only accessible by doctor_general role)
-router.get('/doctor-profile', authenticateToken, authenticateRole('doctor_general'), async (req, res) => {
+// Route for fetching the doctor's profile 
+router.get('/doctor_profile', authenticateToken, async (req, res) => {
   const userId = req.user.id;  
   
   try {
@@ -24,7 +24,7 @@ router.get('/doctor-profile', authenticateToken, authenticateRole('doctor_genera
 });
 
 // Route for creating a new doctor specialty (only accessible by doctor_special role)
-router.post('/doctor-specialty', authenticateToken, authenticateRole('doctor_special'), async (req, res) => {
+router.post('/doctor_specialty', authenticateToken, async (req, res) => {
   const { doctor_id, first_name, last_name, specialty_name, doctor_number, description } = req.body;
 
   try {
@@ -41,8 +41,10 @@ router.post('/doctor-specialty', authenticateToken, authenticateRole('doctor_spe
   }
 });
 
-// Route to fetch all doctor specialties (accessible by any role with token authentication)
-router.get('/doctor-specialty', authenticateToken, async (req, res) => {
+
+
+// Route to fetch all doctor specialties 
+router.get('/doctor_specialty', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM doctor_specialty');
     res.json({ success: true, doctor_specialties: result.rows });
@@ -51,5 +53,13 @@ router.get('/doctor-specialty', authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+
+
+
+
+
+
+
 
 module.exports = router;

@@ -3,7 +3,7 @@
 const doctors = new Map(); // socket.id => { isBusy, patientId }
 // return this when prompting for waiting patients
 const waitingPatients = new Set(); // socket ids
-
+console.log("hhhhhhhhhhhhhh",waitingPatients)
 function checkWaitingPatients(io) {
   if (waitingPatients.size === 0) return;
   for (const [docId, docState] of doctors) {
