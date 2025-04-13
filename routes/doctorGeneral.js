@@ -13,7 +13,7 @@ router.use(cors({
   credentials: true
 }));
 
-router.post('/doctor_general', authenticateToken, authenticateRole('doctor_general'), async (req, res) => {
+router.post('/doctor_general/new', authenticateToken, authenticateRole('doctor_general'), async (req, res) => {
   const { first_name, last_name, doctor_number, years_of_experience } = req.body;
 
   try {
