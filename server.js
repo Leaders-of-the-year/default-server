@@ -10,13 +10,12 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
 app.use(express.json());
 app.use(cors({
-  origin: 'https://192.168.74.215:3000', // your actual frontend origin
+  origin: process.env.FRONTEND_ORIGIN,
   credentials: true
 }));
-// PostgreSQL Connection
+
 const pool = new Pool({
   user: process.env.DB_USER || 'mehdi',
   host: process.env.DB_HOST || 'localhost',
@@ -29,29 +28,24 @@ pool.connect()
   .then(() => console.log('PostgreSQL connected'))
   .catch(err => console.error('Connection error', err));
 
-// HTTPS certificates
 const options = {
   key: fs.readFileSync('key.pem', 'utf8'),
   cert: fs.readFileSync('cert.pem', 'utf8'),
 };
 
-// Create HTTPS server
 const server = https.createServer(options, app);
 
-// Socket.IO setup
 const io = new Server(server, {
   cors: {
-    origin: 'https://192.168.74.215:3000',
+    origin: process.env.FRONTEND_ORIGIN,
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type'],
     credentials: true,
   },
 });
 
-// ✅ Import and run video call socket logic
 require('./socket/videoCall')(io);
 
-// Basic Routes
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
@@ -61,12 +55,10 @@ app.get('/test-db', async (req, res) => {
     const result = await pool.query('SELECT NOW()');
     res.json({ success: true, time: result.rows[0].now });
   } catch (err) {
-    console.error('Database error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// API Routes
 const authRoutes = require('./routes/auth');
 const doctorGeneralRoutes = require('./routes/doctorGeneral');
 const patientRoutes = require('./routes/patients');
@@ -77,9 +69,8 @@ app.use('/api/dashboard_doctors_general', doctorGeneralRoutes);
 app.use('/api/dashboard_patients', patientRoutes);
 app.use('/api/dashboard_doctors_specialty', doctorSpecialtyRoutes);
 
-// Start Server
-server.listen(3001, '192.168.74.215', () => {
-  console.log('🚀 Server running at https://192.168.74.215:3001');
+server.listen(process.env.SERVER_PORT || 3001, `${process.env.SERVER_HOST}`, () => {
+  console.log(`🚀 Server running at https://${process.env.SERVER_HOST}:${process.env.SERVER_PORT}`);
 });
 
 server.on('error', (error) => {
