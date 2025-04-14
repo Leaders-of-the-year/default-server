@@ -35,7 +35,7 @@ const authenticateRole = (role) => {
 
       // If role does not match the required role, deny access
       if (roleResult.rows[0].role_name !== role) {
-        return res.status(403).json({ success: false, message: 'Access denied. You do not have the correct role.' });
+        return res.status(403).json({ success: false, message: 'Access denied.  not authorized.' });
       }
 
       req.user = decoded;  // Attach user info to request object for further use in route

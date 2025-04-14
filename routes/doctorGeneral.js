@@ -29,7 +29,7 @@ router.post('/doctor_general/new', authenticateToken, authenticateRole('doctor_g
   }
 });
 
-router.get('/doctor_general', authenticateToken, async (req, res) => {
+router.get('/doctor_general', authenticateToken,authenticateRole('doctor_general') ,async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM doctor_general');
     res.json({ success: true, doctors: result.rows });
@@ -38,7 +38,7 @@ router.get('/doctor_general', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/doctor_profile', authenticateToken , async (req, res) => {
+router.get('/doctor_profile', authenticateToken , authenticateRole('doctor_general'),async (req, res) => {
   const userId = req.user.id;
 
   try {
@@ -52,7 +52,7 @@ router.get('/doctor_profile', authenticateToken , async (req, res) => {
   }
 });
 
-router.get('/mypatients', authenticateToken, async (req, res) => {
+router.get('/mypatients', authenticateToken, authenticateRole('doctor_general'),async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM patients');
     res.json({ success: true, patients: result.rows });
@@ -61,7 +61,7 @@ router.get('/mypatients', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/mypatients/search', authenticateToken, async (req, res) => {
+router.get('/mypatients/search', authenticateToken, authenticateRole('doctor_general'),async (req, res) => {
   const searchTerm = req.query.q?.trim();
 
   if (!searchTerm) {
@@ -92,7 +92,7 @@ router.get('/mypatients/search', authenticateToken, async (req, res) => {
   }
 });
 
-router.put('/doctor_profile/update', authenticateToken, async (req, res) => {
+router.put('/doctor_profile/update', authenticateToken, authenticateRole('doctor_general'),async (req, res) => {
   const userId = req.user.id;
   const { first_name, last_name, doctor_number, years_of_experience } = req.body;
 
@@ -118,7 +118,7 @@ router.put('/doctor_profile/update', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/patient/id/:id', authenticateToken, async (req, res) => {
+router.get('/patient/id/:id', authenticateToken, authenticateRole('doctor_general'),async (req, res) => {
   const patientId = req.params.id;
   const requesterId = req.user.id;
   const role = req.user.role;
@@ -140,7 +140,7 @@ router.get('/patient/id/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/doctor_specialty/id/:id', authenticateToken, async (req, res) => {
+router.get('/doctor_specialty/id/:id', authenticateToken, authenticateRole('doctor_general'),async (req, res) => {
   const doctorId = parseInt(req.params.id);
 
   if (isNaN(doctorId)) {
@@ -166,7 +166,7 @@ router.get('/doctor_specialty/id/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.put('/patient_profile/update', authenticateToken, async (req, res) => {
+router.put('/patient_profile/update', authenticateToken, authenticateRole('doctor_general'),async (req, res) => {
   const { patient_id, first_name, last_name, phone_number, address, gender, medical_info } = req.body;
 
   if (!patient_id) {

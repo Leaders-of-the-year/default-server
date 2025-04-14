@@ -6,7 +6,7 @@ const authenticateToken = require('../middlewares/authMiddleware');
 const authenticateRole = require('../middlewares/authenticateRole'); 
 
 // Route for fetching the doctor's profile 
-router.get('/doctor_profile', authenticateToken, async (req, res) => {
+router.get('/doctor_profile', authenticateToken, authenticateRole('doctor_special'),async (req, res) => {
   const userId = req.user.id;  
   
   try {
@@ -24,7 +24,7 @@ router.get('/doctor_profile', authenticateToken, async (req, res) => {
 });
 
 // Route for creating a new doctor specialty (only accessible by doctor_special role)
-router.post('/doctor_specialty/new', authenticateToken, async (req, res) => {
+router.post('/doctor_specialty/new', authenticateToken, authenticateRole('doctor_special'),async (req, res) => {
   const { doctor_id, first_name, last_name, specialty_name, doctor_number, description } = req.body;
 
   try {
@@ -44,7 +44,7 @@ router.post('/doctor_specialty/new', authenticateToken, async (req, res) => {
 
 
 // Route to fetch all doctor specialties 
-router.get('/doctor_specialty', authenticateToken, async (req, res) => {
+router.get('/doctor_specialty', authenticateToken, authenticateRole('doctor_special'),async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM doctor_specialty');
     res.json({ success: true, doctor_specialties: result.rows });
@@ -64,7 +64,7 @@ router.get('/mypatients', authenticateToken, async (req, res) => {
   }
 });
 //fetch patient with patient id 
-router.get('/patient/id/:id', authenticateToken, async (req, res) => {
+router.get('/patient/id/:id', authenticateToken, authenticateRole('doctor_special'),async (req, res) => {
   const patientId = req.params.id;
   const requesterId = req.user.id;
   const role = req.user.role;
@@ -87,7 +87,7 @@ router.get('/patient/id/:id', authenticateToken, async (req, res) => {
 });
 
 
-router.put('/patient_profile/update', authenticateToken, async (req, res) => {
+router.put('/patient_profile/update', authenticateToken,authenticateRole('doctor_special'), async (req, res) => {
   const { patient_id, first_name, last_name, phone_number, address, gender, medical_info } = req.body;
 
   if (!patient_id) {
@@ -117,7 +117,7 @@ router.put('/patient_profile/update', authenticateToken, async (req, res) => {
 });
 
 
-router.put('/doctor_profile/update', authenticateToken, async (req, res) => {
+router.put('/doctor_profile/update', authenticateToken, authenticateRole('doctor_special'),async (req, res) => {
   const userId = req.user.id;
   const { first_name, last_name, doctor_number, specialty_name, description } = req.body;
 
@@ -148,7 +148,7 @@ router.put('/doctor_profile/update', authenticateToken, async (req, res) => {
   }
 });
 // works and tested
-router.get('/doctor_specialty/id/:id', authenticateToken, async (req, res) => {
+router.get('/doctor_specialty/id/:id', authenticateToken,authenticateRole('doctor_special'), async (req, res) => {
   const doctorId = parseInt(req.params.id);
 
   if (isNaN(doctorId)) {
@@ -174,7 +174,7 @@ router.get('/doctor_specialty/id/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/doctor_general/id/:id', authenticateToken, async (req, res) => {
+router.get('/doctor_general/id/:id', authenticateToken, authenticateRole('doctor_special'),async (req, res) => {
   const doctorId = parseInt(req.params.id);
 
   if (isNaN(doctorId)) {

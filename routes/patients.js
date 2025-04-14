@@ -105,7 +105,7 @@ router.get('/patient/mydoctors', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/patient/mydoctors/search', authenticateToken, async (req, res) => {
+router.get('/patient/mydoctors/search', authenticateToken,async (req, res) => {
   const doctorName = req.query.name;
   const specialtyFilter = req.query.specialty;
 
@@ -148,7 +148,7 @@ router.get('/patient/mydoctors/search', authenticateToken, async (req, res) => {
   }
 });
 // for fecthing a spesefic doctor profile
-router.get('/patient/mydoctors/id/:id', authenticateToken, async (req, res) => {
+router.get('/patient/mydoctors/id/:id', authenticateToken,async (req, res) => {
   const doctorId = parseInt(req.params.id); // Ensure it's a number
 
   if (isNaN(doctorId)) {
