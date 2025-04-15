@@ -203,7 +203,7 @@ router.get('/patient/id/:id', authenticateToken, async (req, res) => {
 });
 
 // ✅ NEW: Route to fetch all doctor specialties (for dashboard "My Doctors" view)
-router.get('/patient/mydoctors', authenticateToken, async (req, res) => {
+router.get('/patient/mydoctors/all', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM doctor_specialty');
     res.json({ success: true, doctor_specialty: result.rows });
@@ -283,6 +283,25 @@ router.get('/patient/mydoctors/id/:id', authenticateToken,async (req, res) => {
   }
 });
 
+router.get('/patient/mydoctors', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        first_name,
+        last_name,
+        doctor_number,
+        specialty_name,
+        available,
+        user_id
+      FROM doctor_specialty
+    `);
+
+    res.json({ success: true, doctor_specialty: result.rows });
+  } catch (err) {
+    console.error('Error fetching doctor specialties:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 
 

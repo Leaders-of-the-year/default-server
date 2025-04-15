@@ -42,7 +42,7 @@ router.post('/register', async (req, res) => {
     doctor_number,
     years_of_experience,
     description,
-    
+    available,
   } = req.body;
 
   try {
@@ -99,6 +99,7 @@ router.post('/register', async (req, res) => {
           created_at,
           updated_at,
           is_active
+          
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
           $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
@@ -136,12 +137,9 @@ router.post('/register', async (req, res) => {
         [doctor_number]
       );
     
-      const numberCheckSpecial = await pool.query(
-        'SELECT 1 FROM doctor_specialty WHERE doctor_number = $1',
-        [doctor_number]
-      );
     
-      if (numberCheckGeneral.rows.length > 0 || numberCheckSpecial.rows.length > 0) {
+    
+      if (numberCheckGeneral.rows.length > 0) {
         return res.status(400).json({ success: false, message: 'Doctor number already in use' });
       }
     
@@ -155,7 +153,8 @@ router.post('/register', async (req, res) => {
           address_line1,
           state,
           postal_code,
-          preferred_language
+          preferred_language,
+          
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
         [
           first_name || null,
@@ -178,6 +177,15 @@ router.post('/register', async (req, res) => {
     
     
 } else if (type === 'doctor_specialty') {
+
+  const numberCheckSpecial = await pool.query(
+    'SELECT 1 FROM doctor_specialty WHERE doctor_number = $1',
+    [doctor_number]
+  );
+
+  if (numberCheckSpecial.rows.length > 0) {
+    return res.status(400).json({ success: false, message: 'Doctor number already in use' });
+  }
   const profileInsert = await pool.query(
     `INSERT INTO doctor_specialty (
       first_name,
@@ -190,8 +198,9 @@ router.post('/register', async (req, res) => {
       state,
       postal_code,
       preferred_language,
-      years_of_experience
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+      years_of_experience,
+      available
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
     [
       first_name || null,
       last_name || null,
@@ -203,9 +212,11 @@ router.post('/register', async (req, res) => {
       state || null,
       postal_code || null,
       preferred_language || null,
-      years_of_experience || null
+      years_of_experience || null,
+      false  // Make sure to pass false here for the available boolean field
     ]
   );
+  
 
   return res.status(201).json({
     success: true,

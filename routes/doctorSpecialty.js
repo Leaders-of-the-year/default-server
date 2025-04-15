@@ -23,23 +23,6 @@ router.get('/doctor_profile', authenticateToken, authenticateRole('doctor_specia
   }
 });
 
-// Route for creating a new doctor specialty (only accessible by doctor_special role)
-router.post('/doctor_specialty/new', authenticateToken, authenticateRole('doctor_special'),async (req, res) => {
-  const { doctor_id, first_name, last_name, specialty_name, doctor_number, description } = req.body;
-
-  try {
-    const result = await pool.query(
-      `INSERT INTO doctor_specialty (doctor_id, first_name, last_name, specialty_name, doctor_number, description) 
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [doctor_id, first_name, last_name, specialty_name, doctor_number, description]
-    );
-    
-    res.status(201).json({ success: true, doctor_specialty: result.rows[0] });
-  } catch (err) {
-    console.error('Error inserting doctor specialty:', err);    
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
 
 
 
@@ -235,7 +218,8 @@ router.put('/doctor_profile/update', authenticateToken, authenticateRole('doctor
     state,
     postal_code,
     preferred_language,
-    years_of_experience
+    years_of_experience,
+    available,
   } = req.body;
 
   try {
@@ -250,8 +234,9 @@ router.put('/doctor_profile/update', authenticateToken, authenticateRole('doctor
            state = $7,
            postal_code = $8,
            preferred_language = $9,
-           years_of_experience = $10
-       WHERE user_id = $11
+           years_of_experience = $10,
+           available = $11
+       WHERE user_id = $12
        RETURNING *`,
       [
         first_name || null,
@@ -264,7 +249,8 @@ router.put('/doctor_profile/update', authenticateToken, authenticateRole('doctor
         postal_code || null,
         preferred_language || null,
         years_of_experience || null,
-        userId
+        available || false,  // Ensure available is a boolean
+        userId  // userId should be at the end
       ]
     );
 
@@ -281,6 +267,7 @@ router.put('/doctor_profile/update', authenticateToken, authenticateRole('doctor
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 // works and tested
 router.get('/doctor_specialty/id/:id', authenticateToken,authenticateRole('doctor_special'), async (req, res) => {
@@ -334,5 +321,41 @@ router.get('/doctor_general/id/:id', authenticateToken, authenticateRole('doctor
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+router.put('/doctor_profile/availability', authenticateToken, authenticateRole('doctor_special'), async (req, res) => {
+  const userId = req.user.id;
+  const { available } = req.body;  // Only the 'available' field is expected
+
+  try {
+    // Update only the 'available' field for the doctor_specialty
+    const result = await pool.query(
+      `UPDATE doctor_specialty
+       SET available = $1
+       WHERE user_id = $2
+       RETURNING *`,
+      [
+        available,  // The boolean value for availability (true or false)
+        userId  // The user ID to identify which doctor to update
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Doctor not found' });
+    }
+
+    res.json({
+      success: true,
+      doctor: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Error updating doctor availability:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+
+
+
 
 module.exports = router;
