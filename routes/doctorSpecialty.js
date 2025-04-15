@@ -223,21 +223,49 @@ router.put('/patient_profile/update', authenticateToken, async (req, res) => {
 
 
 
-router.put('/doctor_profile/update', authenticateToken, authenticateRole('doctor_special'),async (req, res) => {
+router.put('/doctor_profile/update', authenticateToken, authenticateRole('doctor_special'), async (req, res) => {
   const userId = req.user.id;
-  const { first_name, last_name, doctor_number, specialty_name, description } = req.body;
+  const {
+    first_name,
+    last_name,
+    doctor_number,
+    specialty_name,
+    description,
+    address_line1,
+    state,
+    postal_code,
+    preferred_language,
+    years_of_experience
+  } = req.body;
 
   try {
     const result = await pool.query(
       `UPDATE doctor_specialty
-       SET first_name = $1, 
-           last_name = $2, 
-           doctor_number = $3, 
-           specialty_name = $4, 
-           description = $5
-       WHERE user_id = $6
+       SET first_name = $1,
+           last_name = $2,
+           doctor_number = $3,
+           specialty_name = $4,
+           description = $5,
+           address_line1 = $6,
+           state = $7,
+           postal_code = $8,
+           preferred_language = $9,
+           years_of_experience = $10
+       WHERE user_id = $11
        RETURNING *`,
-      [first_name, last_name, doctor_number, specialty_name, description || null, userId]
+      [
+        first_name || null,
+        last_name || null,
+        doctor_number,
+        specialty_name,
+        description || null,
+        address_line1 || null,
+        state || null,
+        postal_code || null,
+        preferred_language || null,
+        years_of_experience || null,
+        userId
+      ]
     );
 
     if (result.rows.length === 0) {
@@ -253,6 +281,7 @@ router.put('/doctor_profile/update', authenticateToken, authenticateRole('doctor
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 // works and tested
 router.get('/doctor_specialty/id/:id', authenticateToken,authenticateRole('doctor_special'), async (req, res) => {
   const doctorId = parseInt(req.params.id);

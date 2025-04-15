@@ -41,7 +41,8 @@ router.post('/register', async (req, res) => {
     specialty_name,
     doctor_number,
     years_of_experience,
-    description
+    description,
+    
   } = req.body;
 
   try {
@@ -128,51 +129,94 @@ router.post('/register', async (req, res) => {
       );
 
       return res.status(201).json({ success: true, user: userInsert.rows[0], profile: profileInsert.rows[0] });
+    
     } else if (type === 'doctor_general') {
-      // Check if doctor_number exists in either doctor_general or doctor_specialty
-const numberCheckGeneral = await pool.query(
-  'SELECT 1 FROM doctor_general WHERE doctor_number = $1',
-  [doctor_number]
-);
-
-const numberCheckSpecial = await pool.query(
-  'SELECT 1 FROM doctor_specialty WHERE doctor_number = $1',
-  [doctor_number]
-);
-
-if (numberCheckGeneral.rows.length > 0 || numberCheckSpecial.rows.length > 0) {
-  return res.status(400).json({ success: false, message: 'Doctor number already in use' });
-}
-
-// Insert into doctor_general
-const profileInsert = await pool.query(
-  `INSERT INTO doctor_general (
-    first_name,
-    last_name,
-    doctor_number,
-    years_of_experience,
-    user_id
-  ) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-  [first_name, last_name, doctor_number, years_of_experience || null, userId]
-);
-
-return res.status(201).json({ success: true, user: userInsert.rows[0], profile: profileInsert.rows[0] });
-
-    } else if (type === 'doctor_specialty') {
+      const numberCheckGeneral = await pool.query(
+        'SELECT 1 FROM doctor_general WHERE doctor_number = $1',
+        [doctor_number]
+      );
+    
+      const numberCheckSpecial = await pool.query(
+        'SELECT 1 FROM doctor_specialty WHERE doctor_number = $1',
+        [doctor_number]
+      );
+    
+      if (numberCheckGeneral.rows.length > 0 || numberCheckSpecial.rows.length > 0) {
+        return res.status(400).json({ success: false, message: 'Doctor number already in use' });
+      }
+    
       const profileInsert = await pool.query(
-        `INSERT INTO doctor_specialty (
+        `INSERT INTO doctor_general (
           first_name,
           last_name,
-          specialty_name,
           doctor_number,
-          description,
-          user_id
-        ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [first_name, last_name, specialty_name, doctor_number, description || null, userId]
+          years_of_experience,
+          user_id,
+          address_line1,
+          state,
+          postal_code,
+          preferred_language
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [
+          first_name || null,
+          last_name || null,
+          doctor_number,
+          years_of_experience || null,
+          userId,
+          address_line1 || null,
+          state || null,
+          postal_code || null,
+          preferred_language || null
+        ]
       );
+    
+      return res.status(201).json({
+        success: true,
+        user: userInsert.rows[0],
+        profile: profileInsert.rows[0]
+      });
+    
+    
+} else if (type === 'doctor_specialty') {
+  const profileInsert = await pool.query(
+    `INSERT INTO doctor_specialty (
+      first_name,
+      last_name,
+      specialty_name,
+      doctor_number,
+      description,
+      user_id,
+      address_line1,
+      state,
+      postal_code,
+      preferred_language,
+      years_of_experience
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+    [
+      first_name || null,
+      last_name || null,
+      specialty_name,
+      doctor_number,
+      description || null,
+      userId,
+      address_line1 || null,
+      state || null,
+      postal_code || null,
+      preferred_language || null,
+      years_of_experience || null
+    ]
+  );
 
-      return res.status(201).json({ success: true, user: userInsert.rows[0], profile: profileInsert.rows[0] });
-    } else {
+  return res.status(201).json({
+    success: true,
+    user: userInsert.rows[0],
+    profile: profileInsert.rows[0]
+  });
+}
+
+    
+    
+    else {
       return res.status(400).json({ success: false, message: 'Invalid user type' });
     }
   } catch (err) {

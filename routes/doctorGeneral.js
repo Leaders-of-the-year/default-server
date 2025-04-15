@@ -278,19 +278,42 @@ router.get('/doctor_specialty/id/:id', authenticateToken, authenticateRole('doct
 
 router.put('/doctor_profile/update', authenticateToken, authenticateRole('doctor_general'), async (req, res) => {
   const userId = req.user.id;
-  const { first_name, last_name, doctor_number, years_of_experience } = req.body;
+  const {
+    first_name,
+    last_name,
+    doctor_number,
+    years_of_experience,
+    address_line1,
+    state,
+    postal_code,
+    preferred_language
+  } = req.body;
 
   try {
     const result = await pool.query(
       `UPDATE doctor_general
-       SET first_name = $1, 
-           last_name = $2, 
-           doctor_number = $3, 
+       SET first_name = $1,
+           last_name = $2,
+           doctor_number = $3,
            years_of_experience = $4,
+           address_line1 = $5,
+           state = $6,
+           postal_code = $7,
+           preferred_language = $8,
            created_at = CURRENT_TIMESTAMP
-       WHERE user_id = $5
+       WHERE user_id = $9
        RETURNING *`,
-      [first_name, last_name, doctor_number, years_of_experience || null, userId]
+      [
+        first_name || null,
+        last_name || null,
+        doctor_number,
+        years_of_experience || null,
+        address_line1 || null,
+        state || null,
+        postal_code || null,
+        preferred_language || null,
+        userId
+      ]
     );
 
     if (result.rows.length === 0) {
@@ -306,5 +329,6 @@ router.put('/doctor_profile/update', authenticateToken, authenticateRole('doctor
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 module.exports = router;
