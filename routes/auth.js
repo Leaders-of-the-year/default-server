@@ -226,6 +226,15 @@ router.post('/register', async (req, res) => {
 });
 
 // Login Route - use shared users table
+const getRoleType = (roleId) => {
+  const mapping = {
+    1: 'doctor_general',
+    2: 'doctor_specialty',
+    3: 'patient'
+  };
+  return mapping[roleId] || 'unknown';
+};
+
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -243,8 +252,11 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid password' });
     }
 
+    // 👇 Map role_id to role string
+    const role = getRoleType(user.role_id);
+
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: user.id, email: user.email, role },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -256,7 +268,7 @@ router.post('/login', async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.role
+        role
       }
     });
   } catch (err) {
@@ -264,5 +276,6 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 module.exports = router;
