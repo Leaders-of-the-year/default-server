@@ -92,31 +92,141 @@ router.get('/mypatients/search', authenticateToken, authenticateRole('doctor_gen
   }
 });
 
-router.put('/doctor_profile/update', authenticateToken, authenticateRole('doctor_general'),async (req, res) => {
-  const userId = req.user.id;
-  const { first_name, last_name, doctor_number, years_of_experience } = req.body;
-
+router.put('/patient_profile/update', authenticateToken, async (req, res) => {
+  const {
+    patient_id, // Used to locate the record
+    first_name,
+    last_name,
+    preferred_name,
+    date_of_birth,
+    gender,
+    phone_number,
+    emergency_contact,
+    chief_complaint,
+    vital_signs,
+    height_cm,
+    weight_kg,
+    bmi,
+    allergies,
+    current_medications,
+    chronic_conditions,
+    consultation_notes,
+    assessment,
+    plan,
+    follow_up_instructions,
+    blood_type,
+    address_line1,
+    city,
+    state,
+    country,
+    postal_code,
+    insurance_info,
+    past_medical_history,
+    family_medical_history,
+    lifestyle,
+    preferred_language,
+    accessibility_needs,
+    next_appointment,
+    follow_up_reason,
+    referrals,
+    prescriptions
+  } = req.body;
+  if (!patient_id) {
+    return res.status(400).json({ success: false, message: 'Patient ID is required' });
+  }
   try {
     const result = await pool.query(
-      `UPDATE doctor_general
-       SET first_name = $1, last_name = $2, doctor_number = $3, years_of_experience = $4
-       WHERE user_id = $5
-       RETURNING *`,
-      [first_name, last_name, doctor_number, years_of_experience || null, userId]
+      `UPDATE patients SET
+        first_name = $1,
+        last_name = $2,
+        preferred_name = $3,
+        date_of_birth = $4,
+        gender = $5,
+        phone_number = $6,
+        emergency_contact = $7,
+        chief_complaint = $8,
+        vital_signs = $9,
+        height_cm = $10,
+        weight_kg = $11,
+        bmi = $12,
+        allergies = $13,
+        current_medications = $14,
+        chronic_conditions = $15,
+        consultation_notes = $16,
+        assessment = $17,
+        plan = $18,
+        follow_up_instructions = $19,
+        blood_type = $20,
+        address_line1 = $21,
+        city = $22,
+        state = $23,
+        country = $24,
+        postal_code = $25,
+        insurance_info = $26,
+        past_medical_history = $27,
+        family_medical_history = $28,
+        lifestyle = $29,
+        preferred_language = $30,
+        accessibility_needs = $31,
+        next_appointment = $32,
+        follow_up_reason = $33,
+        referrals = $34,
+        prescriptions = $35,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE patient_id = $36
+      RETURNING *`,
+      [
+        first_name,
+        last_name,
+        preferred_name,
+        date_of_birth,
+        gender,
+        phone_number,
+        emergency_contact ? JSON.stringify(emergency_contact) : null,
+        chief_complaint,
+        vital_signs ? JSON.stringify(vital_signs) : null,
+        height_cm,
+        weight_kg,
+        bmi,
+        Array.isArray(allergies) ? allergies : null,
+        Array.isArray(current_medications) ? current_medications : null,
+        Array.isArray(chronic_conditions) ? chronic_conditions : null,
+        consultation_notes,
+        assessment,
+        plan,
+        follow_up_instructions,
+        blood_type,
+        address_line1,
+        city,
+        state,
+        country,
+        postal_code,
+        insurance_info ? JSON.stringify(insurance_info) : null,
+        past_medical_history,
+        family_medical_history,
+        lifestyle ? JSON.stringify(lifestyle) : null,
+        preferred_language,
+        accessibility_needs,
+        next_appointment,
+        follow_up_reason,
+        Array.isArray(referrals) ? referrals : null,
+        Array.isArray(prescriptions) ? prescriptions.map(p => JSON.stringify(p)) : null,
+        patient_id // <-- Now this is used to find the patient
+      ]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Doctor not found' });
+      return res.status(404).json({ success: false, message: 'Patient not found' });
     }
 
-    res.json({
-      success: true,
-      doctor: result.rows[0]
-    });
+    res.json({ success: true, patient: result.rows[0] });
   } catch (err) {
+    console.error('Update error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+
 
 router.get('/patient/id/:id', authenticateToken, authenticateRole('doctor_general'),async (req, res) => {
   const patientId = req.params.id;
@@ -166,31 +276,33 @@ router.get('/doctor_specialty/id/:id', authenticateToken, authenticateRole('doct
   }
 });
 
-router.put('/patient_profile/update', authenticateToken, authenticateRole('doctor_general'),async (req, res) => {
-  const { patient_id, first_name, last_name, phone_number, address, gender, medical_info } = req.body;
-
-  if (!patient_id) {
-    return res.status(400).json({ success: false, message: 'Patient ID is required' });
-  }
+router.put('/doctor_profile/update', authenticateToken, authenticateRole('doctor_general'), async (req, res) => {
+  const userId = req.user.id;
+  const { first_name, last_name, doctor_number, years_of_experience } = req.body;
 
   try {
     const result = await pool.query(
-      `UPDATE patients
-       SET first_name = $1, last_name = $2, phone_number = $3, address = $4, gender = $5, medical_info = $6
-       WHERE patient_id = $7
+      `UPDATE doctor_general
+       SET first_name = $1, 
+           last_name = $2, 
+           doctor_number = $3, 
+           years_of_experience = $4,
+           created_at = CURRENT_TIMESTAMP
+       WHERE user_id = $5
        RETURNING *`,
-      [first_name, last_name, phone_number, address, gender, medical_info || null, patient_id]
+      [first_name, last_name, doctor_number, years_of_experience || null, userId]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Patient not found' });
+      return res.status(404).json({ success: false, message: 'Doctor not found' });
     }
 
     res.json({
       success: true,
-      patient: result.rows[0]
+      doctor: result.rows[0]
     });
   } catch (err) {
+    console.error('Error updating doctor profile:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
