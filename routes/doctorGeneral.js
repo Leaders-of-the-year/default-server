@@ -38,6 +38,18 @@ router.get('/doctor_general', authenticateToken,authenticateRole('doctor_general
   }
 });
 
+
+router.get('/doctor_specialty', authenticateToken,authenticateRole('doctor_general') ,async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM doctor_specialty');
+    res.json({ success: true, doctors: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+
 router.get('/doctor_profile', authenticateToken , authenticateRole('doctor_general'),async (req, res) => {
   const userId = req.user.id;
 
@@ -329,6 +341,60 @@ router.put('/doctor_profile/update', authenticateToken, authenticateRole('doctor
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// POST /api/schedule/doctor/general/appointment
+router.post('/schedule/setappointment', authenticateToken, async (req, res) => {
+  const { specialty_doctor_id, patient_id, appointment_date, reason } = req.body;
+  const userId = req.user.id; // Comes from the token
+
+  try {
+    // Check if the user is a general doctor by looking for user_id in the doctor_general table
+    const doctorResult = await pool.query(
+      'SELECT * FROM doctor_general WHERE user_id = $1', // No need for doctor_id, we use user_id directly
+      [userId]
+    );
+
+    if (doctorResult.rows.length === 0) {
+      return res.status(403).json({ success: false, message: 'You must be a general doctor to create an appointment.' });
+    }
+
+    // Check if the specialty doctor exists
+    const specialtyDoctorResult = await pool.query(
+      'SELECT user FROM doctor_specialty WHERE user_id = $1',
+      [specialty_doctor_id]
+    );
+
+    if (specialtyDoctorResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Specialty doctor not found' });
+    }
+
+    // Check if the patient exists
+    const patientResult = await pool.query(
+      'SELECT patient_id FROM patients WHERE patient_id = $1',
+      [patient_id]
+    );
+
+    if (patientResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Patient not found' });
+    }
+
+    // Insert the appointment into the schedule table
+    const result = await pool.query(
+      `INSERT INTO schedule (doctor_id, patient_id, appointment_date, reason)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [specialty_doctor_id, patient_id, appointment_date, reason]
+    );
+
+    res.status(201).json({ success: true, appointment: result.rows[0] });
+
+  } catch (err) {
+    console.error('Error scheduling appointment:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
 
 
 module.exports = router;

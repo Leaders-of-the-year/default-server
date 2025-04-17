@@ -338,11 +338,11 @@ router.post('/schedule/new', authenticateToken, async (req, res) => {
 
 
 
-router.get('/schedule/my', authenticateToken, async (req, res) => {
+router.get('/schedule', authenticateToken, async (req, res) => {
   const userId = req.user.id;
 
   try {
-    // Get the real patient_id string from the profile table
+    // Get the real patient_id string from the patients table
     const result = await pool.query(
       'SELECT patient_id FROM patients WHERE user_id = $1',
       [userId]
@@ -354,9 +354,13 @@ router.get('/schedule/my', authenticateToken, async (req, res) => {
 
     const patientId = result.rows[0].patient_id;
 
-    // Fetch all appointments for this patient
+    // Fetch all appointments along with doctor first and last name
     const appointments = await pool.query(
-      'SELECT * FROM schedule WHERE patient_id = $1 ORDER BY appointment_date ASC',
+      `SELECT s.*, ds.first_name AS doctor_first_name, ds.last_name AS doctor_last_name
+       FROM schedule s
+       JOIN doctor_specialty ds ON s.doctor_id = ds.user_id
+       WHERE s.patient_id = $1
+       ORDER BY s.appointment_date ASC`,
       [patientId]
     );
 
@@ -366,6 +370,7 @@ router.get('/schedule/my', authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 
 // PUT /api/schedule/patient/:id/status

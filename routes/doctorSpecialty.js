@@ -405,13 +405,15 @@ router.post('/schedule/new', authenticateToken, authenticateRole('doctor_special
 });
 
 router.get('/schedule', authenticateToken, authenticateRole('doctor_special'), async (req, res) => {
-  const doctorId = req.user.id; // Get the logged-in doctor's ID
+  const doctorId = req.user.id; // This is the user_id of the doctor
 
   try {
     const result = await pool.query(
-      `SELECT * FROM schedule
-       WHERE doctor_id = $1 AND appointment_date > CURRENT_TIMESTAMP
-       ORDER BY appointment_date ASC`,  // Fetch future appointments
+      `SELECT s.*, p.first_name AS patient_first_name, p.last_name AS patient_last_name
+       FROM schedule s
+       JOIN patients p ON s.patient_id = p.patient_id
+       WHERE s.doctor_id = $1 AND s.appointment_date > CURRENT_TIMESTAMP
+       ORDER BY s.appointment_date ASC`,
       [doctorId]
     );
 
@@ -428,6 +430,7 @@ router.get('/schedule', authenticateToken, authenticateRole('doctor_special'), a
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 
 router.put('/schedule/id/:appointmentId/status', authenticateToken, authenticateRole('doctor_special'), async (req, res) => {
