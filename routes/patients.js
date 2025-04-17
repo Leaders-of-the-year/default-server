@@ -303,6 +303,159 @@ router.get('/patient/mydoctors', authenticateToken, async (req, res) => {
   }
 });
 
+// POST /api/schedule
+router.post('/schedule/new', authenticateToken, async (req, res) => {
+  const { doctor_id, appointment_date, reason } = req.body;
+  const userId = req.user.id; // Logged-in user's ID
+
+  try {
+    // Step 1: Get the patient's actual patient_id (e.g., "PAT-xxxxx") from the profile
+    const patientResult = await pool.query(
+      'SELECT patient_id FROM patients WHERE user_id = $1',
+      [userId]
+    );
+
+    if (patientResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Patient profile not found' });
+    }
+
+    const patient_id = patientResult.rows[0].patient_id;
+
+    // Step 2: Insert appointment
+    const result = await pool.query(
+      `INSERT INTO schedule (doctor_id, patient_id, appointment_date, reason)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [doctor_id, patient_id, appointment_date, reason]
+    );
+
+    res.status(201).json({ success: true, appointment: result.rows[0] });
+  } catch (err) {
+    console.error('Error scheduling appointment:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+
+router.get('/schedule/my', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    // Get the real patient_id string from the profile table
+    const result = await pool.query(
+      'SELECT patient_id FROM patients WHERE user_id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Patient profile not found' });
+    }
+
+    const patientId = result.rows[0].patient_id;
+
+    // Fetch all appointments for this patient
+    const appointments = await pool.query(
+      'SELECT * FROM schedule WHERE patient_id = $1 ORDER BY appointment_date ASC',
+      [patientId]
+    );
+
+    res.json({ success: true, appointments: appointments.rows });
+  } catch (err) {
+    console.error('Error fetching patient schedule:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+// PUT /api/schedule/patient/:id/status
+router.put('/schedule/patient/:id/status', authenticateToken, async (req, res) => {
+  const appointmentId = req.params.id;
+  const { status } = req.body;
+  const userId = req.user.id; // This is the user.id, not the patient_id
+
+  try {
+    // Get the patient_id from the patients table based on the user.id
+    const patientResult = await pool.query(
+      'SELECT patient_id FROM patients WHERE user_id = $1',
+      [userId]
+    );
+
+    if (patientResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Patient profile not found' });
+    }
+
+    const patientId = patientResult.rows[0].patient_id;
+
+    // Confirm the appointment belongs to the patient
+    const appointmentCheck = await pool.query(
+      'SELECT * FROM schedule WHERE id = $1 AND patient_id = $2',
+      [appointmentId, patientId]
+    );
+
+    if (appointmentCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: 'Not authorized to modify this appointment' });
+    }
+
+    // Update the status
+    const update = await pool.query(
+      `UPDATE schedule SET status = $1 WHERE id = $2 RETURNING *`,
+      [status, appointmentId]
+    );
+
+    res.json({ success: true, appointment: update.rows[0] });
+
+  } catch (err) {
+    console.error('Error updating status:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+// PUT /api/schedule/patient/:id/reschedule
+router.put('/schedule/patient/:id/reschedule', authenticateToken, async (req, res) => {
+  const appointmentId = req.params.id;
+  const { appointment_date } = req.body; // New appointment date
+  const userId = req.user.id; // This is the user.id, not the patient_id
+
+  try {
+    // Get the patient_id from the patients table based on the user.id
+    const patientResult = await pool.query(
+      'SELECT patient_id FROM patients WHERE user_id = $1',
+      [userId]
+    );
+
+    if (patientResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Patient profile not found' });
+    }
+
+    const patientId = patientResult.rows[0].patient_id;
+
+    // Confirm the appointment belongs to the patient
+    const appointmentCheck = await pool.query(
+      'SELECT * FROM schedule WHERE id = $1 AND patient_id = $2',
+      [appointmentId, patientId]
+    );
+
+    if (appointmentCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: 'Not authorized to reschedule this appointment' });
+    }
+
+    // Reschedule the appointment by updating the appointment_date
+    const update = await pool.query(
+      `UPDATE schedule SET appointment_date = $1 WHERE id = $2 RETURNING *`,
+      [appointment_date, appointmentId]
+    );
+
+    res.json({ success: true, appointment: update.rows[0] });
+
+  } catch (err) {
+    console.error('Error rescheduling appointment:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
 
 
 

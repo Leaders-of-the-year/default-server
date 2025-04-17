@@ -50,7 +50,23 @@ router.post('/register', async (req, res) => {
     if (emailCheck.rows.length > 0) {
       return res.status(400).json({ success: false, message: 'Email already in use' });
     }
-
+    const numberCheckGeneral = await pool.query(
+      'SELECT 1 FROM doctor_general WHERE doctor_number = $1',
+      [doctor_number]
+    );
+    
+      if (numberCheckGeneral.rows.length > 0) {
+        return res.status(400).json({ success: false, message: 'Doctor number already in use' });
+      }
+    
+    const numberCheckSpecial = await pool.query(
+      'SELECT 1 FROM doctor_specialty WHERE doctor_number = $1',
+      [doctor_number]
+    );
+  
+    if (numberCheckSpecial.rows.length > 0) {
+      return res.status(400).json({ success: false, message: 'Doctor number already in use' });
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
     const roleId = getRoleId(type);
 
@@ -153,7 +169,7 @@ router.post('/register', async (req, res) => {
           address_line1,
           state,
           postal_code,
-          preferred_language,
+          preferred_language
           
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
         [
