@@ -456,6 +456,40 @@ router.put('/schedule/patient/:id/reschedule', authenticateToken, async (req, re
 });
 
 
+// GET /api/schedule/history
+router.get('/schedule/history', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    // Get patient_id from the patients table
+    const patientResult = await pool.query(
+      'SELECT patient_id FROM patients WHERE user_id = $1',
+      [userId]
+    );
+
+    if (patientResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Patient profile not found' });
+    }
+
+    const patientId = patientResult.rows[0].patient_id;
+
+    // Fetch both past completed and all cancelled appointments
+    const result = await pool.query(
+      `SELECT * FROM schedule
+       WHERE patient_id = $1 AND (
+         (status = 'completed' AND appointment_date < NOW()) OR
+         status = 'cancelled'
+       )
+       ORDER BY appointment_date DESC`,
+      [patientId]
+    );
+
+    res.json({ success: true, history: result.rows });
+  } catch (err) {
+    console.error('Error fetching appointment history:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 
 

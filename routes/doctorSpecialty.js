@@ -555,6 +555,27 @@ router.put('/schedule/:id/reschedule',authenticateToken,authenticateRole('doctor
 );
 
 
+router.get('/schedule/history', authenticateToken, async (req, res) => {
+  const doctorId = req.user.id; // Using user.id directly as doctor_id
+
+  try {
+    const result = await pool.query(
+      `SELECT * FROM schedule
+       WHERE doctor_id = $1 AND (
+         (status = 'completed' AND appointment_date < NOW()) OR
+         status = 'cancelled'
+       )
+       ORDER BY appointment_date DESC`,
+      [doctorId]
+    );
+
+    res.json({ success: true, history: result.rows });
+  } catch (err) {
+    console.error('Error fetching doctor appointment history:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 
 
