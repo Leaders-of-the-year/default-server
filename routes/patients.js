@@ -305,7 +305,7 @@ router.get('/patient/mydoctors', authenticateToken, async (req, res) => {
 
 // POST /api/schedule
 router.post('/schedule/new', authenticateToken, async (req, res) => {
-  const { doctor_id, appointment_date, reason } = req.body;
+  const { doctor_id, appointment_date, reason, emergency = false } = req.body; // Default to false if not provided
   const userId = req.user.id; // Logged-in user's ID
 
   try {
@@ -323,10 +323,10 @@ router.post('/schedule/new', authenticateToken, async (req, res) => {
 
     // Step 2: Insert appointment
     const result = await pool.query(
-      `INSERT INTO schedule (doctor_id, patient_id, appointment_date, reason)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO schedule (doctor_id, patient_id, appointment_date, reason, emergency)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [doctor_id, patient_id, appointment_date, reason]
+      [doctor_id, patient_id, appointment_date, reason, emergency]
     );
 
     res.status(201).json({ success: true, appointment: result.rows[0] });
@@ -335,7 +335,6 @@ router.post('/schedule/new', authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-
 
 
 router.get('/schedule', authenticateToken, async (req, res) => {
@@ -492,6 +491,44 @@ router.get('/schedule/history', authenticateToken, async (req, res) => {
     res.json({ success: true, history: result.rows });
   } catch (err) {
     console.error('Error fetching appointment history:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+router.put('/schedule/:appointmentId/emergency', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  const { appointmentId } = req.params;
+  const { emergency } = req.body; // expected: true or false
+
+  try {
+    // Step 1: Get the patient's real patient_id
+    const patientResult = await pool.query(
+      'SELECT patient_id FROM patients WHERE user_id = $1',
+      [userId]
+    );
+
+    if (patientResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Patient profile not found' });
+    }
+
+    const patientId = patientResult.rows[0].patient_id;
+
+    // Step 2: Update emergency field in the schedule entry (but only if it belongs to this patient)
+    const updateResult = await pool.query(
+      `UPDATE schedule
+       SET emergency = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2 AND patient_id = $3
+       RETURNING *`,
+      [emergency, appointmentId, patientId]
+    );
+
+    if (updateResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Appointment not found or not authorized' });
+    }
+
+    res.json({ success: true, updated: updateResult.rows[0] });
+
+  } catch (err) {
+    console.error('Error updating emergency status:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

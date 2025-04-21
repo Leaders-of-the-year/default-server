@@ -387,8 +387,8 @@ router.post('/schedule/new', authenticateToken, authenticateRole('doctor_special
 
     // Insert the new appointment into the schedule table
     const result = await pool.query(
-      `INSERT INTO schedule (doctor_id, patient_id, appointment_date, reason)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
+      `INSERT INTO schedule (doctor_id, patient_id, appointment_date, reason , emergency)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
       [doctor_id, patient_id, appointment_date, reason || null]
     );
 
@@ -575,6 +575,40 @@ router.get('/schedule/history', authenticateToken, async (req, res) => {
     res.json({ success: true, history: result.rows });
   } catch (err) {
     console.error('Error fetching doctor appointment history:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+router.get('/schedule/patients', authenticateToken, authenticateRole('doctor_special'), async (req, res) => {
+  const doctorUserId = req.user.id;
+
+  try {
+    // Step 1: Get all unique patient user_ids from schedule where doctor_id = this doctor
+    const userIdsResult = await pool.query(`
+      SELECT DISTINCT p.user_id
+      FROM schedule s
+      JOIN patients p ON s.patient_id = p.patient_id
+      WHERE s.doctor_id = $1
+    `, [doctorUserId]);
+
+    const patientUserIds = userIdsResult.rows.map(row => row.user_id);
+
+    if (patientUserIds.length === 0) {
+      return res.json({ success: true, patients: [] }); // No scheduled patients
+    }
+
+    // Step 2: Get full patient records based on those user_ids
+    const placeholders = patientUserIds.map((_, i) => `$${i + 1}`).join(', ');
+    const patientsResult = await pool.query(
+      `SELECT * FROM patients WHERE user_id IN (${placeholders})`,
+      patientUserIds
+    );
+
+    res.json({ success: true, patients: patientsResult.rows });
+
+  } catch (err) {
+    console.error('Error fetching full patient data for doctor:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
