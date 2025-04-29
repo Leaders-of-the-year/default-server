@@ -1,12 +1,12 @@
-// db.js
+
 const { Pool } = require('pg');
+const { parse } = require('pg-connection-string');
 require('dotenv').config();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false, // Required for Render
-  },
-});
+const config = parse(process.env.DATABASE_URL);
 
+// Optional: manually ensure ssl is configured
+config.ssl = { rejectUnauthorized: false };
+
+const pool = new Pool(config);
 module.exports = pool;
