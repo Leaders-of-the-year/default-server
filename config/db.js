@@ -1,11 +1,12 @@
 // db.js
 const { Pool } = require('pg');
+require('dotenv').config();
+
 const pool = new Pool({
-  user: 'mehdi',
-  host: 'localhost', 
-  database: 'doctori_db', 
-  password: 'password123', 
-  port: 5432,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false, // Required for Render
+  },
 });
 
 module.exports = pool;
