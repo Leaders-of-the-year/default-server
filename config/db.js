@@ -6,7 +6,7 @@ require('dotenv').config();
 const config = parse(process.env.DATABASE_URL);
 
 // Optional: manually ensure ssl is configured
-config.ssl = { rejectUnauthorized: true };
+config.ssl = { rejectUnauthorized: false};
 
 const pool = new Pool(config);
 module.exports = pool;
