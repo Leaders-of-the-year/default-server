@@ -256,17 +256,17 @@ router.get('/patient/mydoctors/search', authenticateToken,async (req, res) => {
   }
 });
 // for fecthing a spesefic doctor profile
-router.get('/patient/mydoctors/id/:id', authenticateToken,async (req, res) => {
-  const doctorId = parseInt(req.params.id); // Ensure it's a number
+router.get('/patient/mydoctors/id/:user_id', authenticateToken, async (req, res) => {
+  const userId = req.params.user_id; // user_id is typically a UUID or string
 
-  if (isNaN(doctorId)) {
-    return res.status(400).json({ success: false, message: 'Invalid doctor ID' });
+  if (!userId) {
+    return res.status(400).json({ success: false, message: 'Invalid doctor user ID' });
   }
 
   try {
     const result = await pool.query(
-      'SELECT * FROM doctor_specialty WHERE id = $1',
-      [doctorId]
+      'SELECT * FROM doctor_specialty WHERE user_id = $1',
+      [userId]
     );
 
     if (result.rows.length === 0) {
@@ -282,6 +282,7 @@ router.get('/patient/mydoctors/id/:id', authenticateToken,async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 router.get('/patient/mydoctors', authenticateToken, async (req, res) => {
   try {
