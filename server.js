@@ -3,7 +3,6 @@ const https = require('https');
 const { Server } = require('socket.io');
 const fs = require('fs');
 const cors = require('cors');
-const { Pool } = require('pg');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -16,17 +15,7 @@ app.use(cors({
   credentials: true
 }));
 
-const pool = new Pool({
-  user: process.env.DB_USER || 'mehdi',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'doctori_db',
-  password: process.env.DB_PASSWORD || 'password123',
-  port: process.env.DB_PORT || 5432,
-});
-
-pool.connect()
-  .then(() => console.log('PostgreSQL connected'))
-  .catch(err => console.error('Connection error', err));
+const pool = require('./db');
 
 const options = {
   key: fs.readFileSync('key.pem', 'utf8'),
