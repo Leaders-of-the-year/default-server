@@ -15,7 +15,7 @@ app.use(cors({
   credentials: true
 }));
 
-const pool = require('./db');
+const pool = require('./config/db');
 
 const options = {
   key: fs.readFileSync('key.pem', 'utf8'),
