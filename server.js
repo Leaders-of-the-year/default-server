@@ -58,7 +58,7 @@ app.use('/api/dashboard_doctors_general', doctorGeneralRoutes);
 app.use('/api/dashboard_patients', patientRoutes);
 app.use('/api/dashboard_doctors_specialty', doctorSpecialtyRoutes);
 
-server.listen(process.env.SERVER_PORT || 3001, `${process.env.SERVER_HOST}`, () => {
+server.listen(process.env.SERVER_PORT || 3001, () => {
   console.log(`🚀 Server running at https://${process.env.SERVER_HOST}:${process.env.SERVER_PORT}`);
 });
 
